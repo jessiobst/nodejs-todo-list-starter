@@ -126,7 +126,11 @@ async function obtenerTareas(req, res, next) {
     res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
-    res.send("Error");
+    res.send({
+      details:
+        "This endpoint only support 'application/json' media type, please verify your `Accept` header ",
+      message: `Media not supported :  ${acceptHeader}`
+    });
     res.end();
     return;
   }
@@ -144,7 +148,10 @@ async function obtenerTareas(req, res, next) {
     res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
-    res.send("Error");
+    res.send({
+      message: `Ocurrio un error al obtener las tareas`,
+      details: `El metodo arrojo el siguiente error: ${error}`
+    });
     res.end();
   }
 }
@@ -164,31 +171,28 @@ async function crearTarea(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
     res.statusCode = 400;
-    res.send("Error");
+    res.send({
+      message: `Invalid Content-Type : ${contenTypeHeader}`,
+      details: "This endpoint expected JSON object with attribute `description`"
+    });
     res.end();
     return;
   }
   try{
-    if(req==null || req == undefined || req.body==null || req.body == undefined){
+    if(req==null || req == undefined || req.body==null || req.body == undefined || req.body.description == null || req.body.description == undefined){
       res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
       res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
       res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader("Access-Control-Allow-Origin","*");
       res.statusCode = 400;
-      res.send("Error");
+      res.send({
+        message: "Parametro invalido ",
+        details: "Se espera el atributo 'description' con valor distinto de nulo contenido en un JSON"
+      });
       res.end();
       return;
     }
-    if(req.body.description == null || req.body.description == undefined){
-      res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
-      res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
-      res.setHeader("Access-Control-Allow-Credentials", "true");
-      res.setHeader("Access-Control-Allow-Origin","*");
-      res.statusCode = 400;
-      res.send("Error");
-      res.end();
-      return;
-    }
+
     const jsonBody = req.body;
 
     const modeloACrear = {
@@ -209,7 +213,10 @@ async function crearTarea(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
     res.statusCode = 400;
-    res.send("Error");
+    res.send({
+      message: `Ocurrio un error al intentar crear la tarea: ${modeloACrear.descripcion}`,
+      details: `El metodo arrojo el siguiente error: ${error}`
+    });
     res.end();
   }
 }
@@ -237,7 +244,127 @@ async function obtenerTarea(req, res) {
     res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
-    res.send("Error");
+    res.send({
+      message: `Can't find objecti with id : ${idTarea}`,
+      details: "This endpoint expected a valid object identifier"
+    });
+    res.end();
+  }
+  
+}
+
+/**
+ * Borrar una tarea dado su identificador idTarea
+ * 
+ * @param {object} req Petición HTTP.
+ * @param {object} res Respuesta HTTP.
+ */
+async function eliminarTarea(req, res) {
+  const {idTarea}  = req.params;
+  try{
+    const tarea = await tareasLogic.erase(idTarea);
+    res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
+    res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Origin","*");
+    res.send(tarea);
+    res.end();
+  }
+  catch(error){
+    res.statusCode = 400;
+    res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
+    res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Origin","*");
+    res.send({
+      message: `No fue posible borrar la tarea con id: ${idTarea}`,
+      details: `Error en el metodo: ${error}`
+    });
+    res.end();
+  }
+  
+}
+
+/**
+ * Actualizar una tarea dado su identificador idTarea
+ * 
+ * @param {object} req Petición HTTP.
+ * @param {object} res Respuesta HTTP.
+ */
+async function actualizarTarea(req, res) {
+  try{
+    if(req==null || req == undefined){
+      res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
+      res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Origin","*");
+      res.statusCode = 400;
+      res.send({
+        message: "Parametro invalido ",
+        details: "Se esperan los atributos 'id','description' o 'status' con valor distinto de nulo contenido en un JSON"
+      });
+      res.end();
+      return;
+    } else {
+      const id = req.params.idTarea;
+      const desc = req.body.description;
+      console.info('Descripcion '+desc);
+      const est = req.body.status;
+      console.info('Estado '+est);
+      if (id==null || id==undefined){
+        res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
+        res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Access-Control-Allow-Origin","*");
+        res.statusCode = 400;
+        res.send({
+          message: "Parametro invalido ",
+          details: "Se esperan el atributo 'id' con valor distinto de nulo contenido en un JSON"
+        });
+        res.end();
+      return;
+      }
+
+      const modelo = {
+        description: desc,
+        status: est,
+        date: new Date()
+      };
+    //verificamos si existe el id
+      const ver = await tareasLogic.getOne(id);
+      if(ver==null || ver==undefined){
+        res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
+        res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Access-Control-Allow-Origin","*");
+        res.statusCode = 400;
+        res.send({
+          message: "Id invalido ",
+          details: "No se encuentra la tarea a ser modificada"
+        });
+        res.end();
+        return;
+      }else {
+        const tarea = await tareasLogic.update(id,modelo);
+        res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
+        res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Access-Control-Allow-Origin","*");
+        res.send(tarea);
+        res.end();
+      }
+    }
+  }
+  catch(error){
+    res.statusCode = 400;
+    res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
+    res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Origin","*");
+    res.send({
+      message: `No fue posible actualizar la tarea con id: ${req.params.idTarea}`,
+      details: `Error en el metodo: ${error}`
+    });
     res.end();
   }
   
@@ -255,7 +382,11 @@ tareasRouter
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
     res.statusCode = 405;
-    res.end("PUT method is not supported on /tasks");
+    res.send({
+      message: "PUT method is not supported on /tasks",
+      details: "Error not found"
+    });
+    res.end();
   })
   .delete((req, res, next) => {
     res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
@@ -263,42 +394,32 @@ tareasRouter
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
     res.statusCode = 405;
-    res.end("DELETE method is not supported on /tasks");
+    res.send({
+      message: "DELETE method is not supported on /tasks",
+      details: "Error not found"
+    });
+    res.end();
   });
 
 tareasRouter
   .route("/:idTarea")
   .all(allRequest)
   .options(showOptionsPerResource)
-  .get(obtenerTarea,showOptions)
+  .get(obtenerTarea)
   .post((req, res, next) => {
     res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
     res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Origin","*");
     res.statusCode = 405;
-    res.end("POST operation is not suported on /tareas/" + req.params.idTarea);
+    res.send({
+      message: "POST operation is not suported on /tareas/"+ req.params.idTarea,
+      details: "Error not found"
+    });
+    res.end();
   })
-  .put((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
-    res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Origin","*");
-    res.write("Actualizando la tarea: " + req.params.idTarea + "\n");
-    res.end(
-      "Actualizando la tarea: " +
-        req.body.descripcion +
-        " with details: " +
-        req.body.estado
-    );
-  })
-  .delete((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
-    res.setHeader("Access-Control-Allow-Methods", "OPTIONS,GET,DELETE,PUT");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Origin","*");
-    res.end("Borrando la tarea : " + req.params.idTarea);
-  });
+  .put(actualizarTarea)
+  .delete(eliminarTarea);
 
 module.exports = tareasRouter;
 
