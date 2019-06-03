@@ -10,18 +10,28 @@ const mongoose = require("mongoose");
 async function create(tareaModel) {
   const tarea = new Tarea(tareaModel);
   const tareaCreada = await tarea.save();
-  console.info(`Tarea ${tareaCreada["_id"]} creada exitosamente.`);
+  console.info(`Tarea ${tareaCreada["id"]} creada exitosamente.`);
   return tareaCreada;
 }
 
 async function erase(id) {
   try {
-    await Tarea.remove(id);
+    await Tarea.remove({_id:id});
   } catch (error) {
     console.error(`Error al intentar borrar ${error.name} : ${error.name}`);
   }
 
   return;
+}
+
+async function idUltimoRegistro(){
+  try{
+    console.info(`Entro `);
+    let tareas = await Tarea.find({}).sort({$natural:-1}).limit(1);
+    return tareas[0];
+  }catch(error){
+    console.error(`Explosao: ${error}`);
+  }
 }
 
 async function getAll() {
@@ -37,7 +47,7 @@ async function getOne(id) {
   }
   try {
     const tarea = await Tarea.findById(`${id}`);
-    console.info(`Se obtuvo la tarea con id ${tarea["_id"]}`);
+    console.info(`Se obtuvo la tarea con id ${tarea["id"]}`);
     return tarea;
   } catch (error) {
     console.error(
@@ -49,7 +59,9 @@ async function getOne(id) {
 
 async function update(id, newValues) {
   try {
-    const updatedModel = await Tarea.updateOne({ _id: id }, newValues);
+    const tarea = new Tarea(newValues);
+    const updatedModel = await Tarea.updateOne({ id: id }, newValues);
+    console.info(id, newValues);
     return updatedModel;
   } catch (error) {
     console.error(`Error al intentar actualizar ${error.name} : ${error.name}`);
@@ -62,5 +74,6 @@ module.exports = {
   erase,
   getAll,
   getOne,
-  update
+  update,
+  idUltimoRegistro
 };

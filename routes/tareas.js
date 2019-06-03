@@ -194,11 +194,23 @@ async function crearTarea(req, res) {
     }
 
     const jsonBody = req.body;
-
+    const valid = await tareasLogic.getAll();
+    let sum = 0;
+    if(valid.length>0){
+      const idUlti = await tareasLogic.idUltimoRegistro();
+      sum = idUlti.id+1;
+    }else {
+      sum = sum +1;
+    }
+      
     const modeloACrear = {
-      description: jsonBody.description,
-      status: "PENDIENTE"
-    };
+        id: sum,
+        description: jsonBody.description,
+        status: "PENDIENTE",
+        date: new Date()
+      };
+    console.info('Modelo ', modeloACrear); 
+
 
     const tareaCreada = await tareasLogic.create(modeloACrear);
     res.setHeader("Access-Control-Allow-Headers", "Accept,Content-Type","Access-Control-Allow-Origin");
